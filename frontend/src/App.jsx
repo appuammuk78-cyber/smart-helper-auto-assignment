@@ -5,7 +5,7 @@ import Home from './pages/Home';
 import Next from './pages/Next';
 import Login from './pages/Login';
 import CustomerDashboard from './pages/CustomerDashboard';
-import AdminDashboard from './pages/AdminDashboard';
+import AdminDashboard from './pages/admin/Dashboard';
 import HelperDashboard from './pages/helper/Dashboard';
 
 export default function App() {
