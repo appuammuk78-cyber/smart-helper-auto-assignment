@@ -1,40 +1,23 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { validateLogin } from '../lib/userStore';
-import Button from '../components/ui/Button';
-import Card from '../components/ui/Card';
-import Input from '../components/ui/Input';
-import Loader from '../components/ui/Loader';
-import RoleSelector from '../components/ui/RoleSelector';
+import { useAuth } from '../../context/AuthContext';
+import { validateLogin } from '../../lib/userStore';
+import Button from '../../components/ui/Button';
+import Input from '../../components/ui/Input';
+import Loader from '../../components/ui/Loader';
 
-const ROLE_REDIRECT = {
-  customer: '/customer',
-  helper: '/helper/dashboard',
-  admin: '/admin',
-};
-
-export default function Login() {
+export default function HelperLogin() {
   const navigate = useNavigate();
   const { login } = useAuth();
 
-  const [selectedRole, setSelectedRole] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const canSubmit =
-    selectedRole &&
-    email.trim() &&
-    password.trim() &&
-    !loading;
+  const canSubmit = email.trim() && password.trim() && !loading;
 
   const validate = () => {
-    if (!selectedRole) {
-      setError('Please select a role.');
-      return false;
-    }
     if (!email.trim()) {
       setError('Email is required.');
       return false;
@@ -59,48 +42,34 @@ export default function Login() {
     setLoading(true);
     setError('');
 
-    const isValid = await validateLogin(email.trim(), password, selectedRole);
+    const isValid = await validateLogin(email.trim(), password, 'helper');
     if (!isValid) {
-      setError('Invalid email, password, or role.');
+      setError('Invalid email or password.');
       setLoading(false);
       return;
     }
 
-    login(email.trim(), selectedRole);
+    login(email.trim(), 'helper');
     setLoading(false);
-    navigate(ROLE_REDIRECT[selectedRole], { replace: true });
+    navigate('/helper/dashboard', { replace: true });
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-8 bg-gradient-to-br from-gray-50 to-gray-100">
+    <div className="min-h-screen flex items-center justify-center px-4 py-8 bg-[#F5F7FA]">
       <div className="w-full max-w-md">
-        <div className="mb-4">
-          <Link
-            to="/"
-            className="text-sm text-gray-500 hover:text-gray-700 inline-flex items-center gap-1"
-          >
-            ← Back to home
-          </Link>
-        </div>
-        <Card className="shadow-xl p-6 sm:p-8">
+        <div
+          className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8"
+        >
           <div className="text-center mb-6">
             <h1 className="text-2xl font-bold text-gray-900">
-              Welcome Back
+              Helper Login
             </h1>
-            <p className="mt-1 text-gray-500">
-              Sign in to continue
+            <p className="mt-1.5 text-gray-500 text-sm">
+              Sign in to start accepting jobs
             </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">
-            <RoleSelector
-              value={selectedRole}
-              onChange={(role) => {
-                setSelectedRole(role);
-                setError('');
-              }}
-            />
-
             <Input
               label="Email"
               type="email"
@@ -109,7 +78,7 @@ export default function Login() {
                 setEmail(v);
                 setError('');
               }}
-              placeholder="you@example.com"
+              placeholder="helper@example.com"
               required
               autoComplete="email"
               error={error && (error.includes('Email') || error.includes('valid')) ? error : undefined}
@@ -129,7 +98,7 @@ export default function Login() {
               error={error && error.includes('Password') ? error : undefined}
             />
 
-            {error && error.includes('role') && (
+            {error && !error.includes('Email') && !error.includes('Password') && (
               <p className="text-sm text-red-600 text-center" role="alert">
                 {error}
               </p>
@@ -139,26 +108,35 @@ export default function Login() {
               type="submit"
               fullWidth
               disabled={!canSubmit}
-              className="py-3"
+              className="py-3 rounded-xl !bg-indigo-600 hover:!bg-indigo-700"
             >
               {loading ? (
                 <span className="inline-flex items-center gap-2">
                   <Loader size="sm" className="flex-shrink-0" />
-                  Logging in...
+                  Signing in...
                 </span>
               ) : (
-                'Login'
+                'Sign In'
               )}
             </Button>
-
-            <p className="text-center text-sm text-gray-500 mt-4">
-              Don&apos;t have an account?{' '}
-              <Link to="/signup" className="font-medium text-blue-600 hover:text-blue-700">
-                Sign up
-              </Link>
-            </p>
           </form>
-        </Card>
+
+          <div className="mt-6 text-center">
+            <Link
+              to="/"
+              className="text-sm text-gray-600 hover:text-gray-900"
+            >
+              Back to Home
+            </Link>
+          </div>
+
+          <p className="mt-4 pt-4 border-t border-gray-100 text-center text-sm text-gray-500">
+            Don&apos;t have an account?{' '}
+            <Link to="/signup" className="font-medium text-indigo-600 hover:text-indigo-700">
+              Sign up
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );

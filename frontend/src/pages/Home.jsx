@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
 import Badge from '../components/ui/Badge';
@@ -45,6 +46,8 @@ const AVAILABILITY_COUNT = 5;
 
 export default function Home() {
   const navigate = useNavigate();
+  const { user, logout } = useAuth();
+  const isCustomer = user?.role === 'customer';
   const [selectedService, setSelectedService] = useState(null);
   const [location, setLocation] = useState('');
   const [timeOption, setTimeOption] = useState('Now');
@@ -82,18 +85,46 @@ export default function Home() {
     <div className="min-h-screen flex flex-col">
       {/* 1. Header */}
       <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-100 shadow-sm">
-        <div className="max-w-4xl mx-auto px-4 py-4">
+        <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white font-bold text-lg">
-              S
-            </div>
-            <div>
-              <h1 className="font-bold text-gray-900 text-lg tracking-tight">
-                Smart Helper
-              </h1>
-              <p className="text-xs text-gray-500">Fast • Smart • Reliable</p>
-            </div>
+            <Link to="/" className="flex items-center gap-3">
+              <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white font-bold text-lg">
+                S
+              </div>
+              <div>
+                <h1 className="font-bold text-gray-900 text-lg tracking-tight">
+                  Smart Helper
+                </h1>
+                <p className="text-xs text-gray-500">Fast • Smart • Reliable</p>
+              </div>
+            </Link>
           </div>
+          <nav className="flex items-center gap-3">
+            {isCustomer && (
+              <Link
+                to="/customer"
+                className="text-sm font-medium text-blue-600 hover:text-blue-700"
+              >
+                My Dashboard
+              </Link>
+            )}
+            {user ? (
+              <Button variant="ghost" className="text-sm px-3 py-1.5" onClick={() => logout()}>
+                Logout
+              </Button>
+            ) : (
+              <div className="flex items-center gap-2">
+                <Link to="/login" className="text-sm font-medium text-gray-600 hover:text-gray-900">
+                  Login
+                </Link>
+                <Link to="/signup">
+                  <Button variant="primary" className="text-sm px-3 py-1.5">
+                    Sign up
+                  </Button>
+                </Link>
+              </div>
+            )}
+          </nav>
         </div>
       </header>
 

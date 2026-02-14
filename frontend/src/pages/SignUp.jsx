@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { validateLogin } from '../lib/userStore';
+import { addUser, isEmailTaken } from '../lib/userStore';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
 import Input from '../components/ui/Input';
@@ -14,13 +14,17 @@ const ROLE_REDIRECT = {
   admin: '/admin',
 };
 
-export default function Login() {
+const MIN_PASSWORD_LENGTH = 6;
+
+export default function SignUp() {
   const navigate = useNavigate();
   const { login } = useAuth();
 
   const [selectedRole, setSelectedRole] = useState('');
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -28,6 +32,7 @@ export default function Login() {
     selectedRole &&
     email.trim() &&
     password.trim() &&
+    confirmPassword.trim() &&
     !loading;
 
   const validate = () => {
@@ -48,6 +53,14 @@ export default function Login() {
       setError('Password is required.');
       return false;
     }
+    if (password.length < MIN_PASSWORD_LENGTH) {
+      setError(`Password must be at least ${MIN_PASSWORD_LENGTH} characters.`);
+      return false;
+    }
+    if (password !== confirmPassword) {
+      setError('Passwords do not match.');
+      return false;
+    }
     setError('');
     return true;
   };
@@ -59,13 +72,19 @@ export default function Login() {
     setLoading(true);
     setError('');
 
-    const isValid = await validateLogin(email.trim(), password, selectedRole);
-    if (!isValid) {
-      setError('Invalid email, password, or role.');
+    const taken = await isEmailTaken(email.trim());
+    if (taken) {
+      setError('This email is already registered. Please sign in.');
       setLoading(false);
       return;
     }
 
+    await addUser({
+      email: email.trim(),
+      password,
+      role: selectedRole,
+      name,
+    });
     login(email.trim(), selectedRole);
     setLoading(false);
     navigate(ROLE_REDIRECT[selectedRole], { replace: true });
@@ -85,10 +104,10 @@ export default function Login() {
         <Card className="shadow-xl p-6 sm:p-8">
           <div className="text-center mb-6">
             <h1 className="text-2xl font-bold text-gray-900">
-              Welcome Back
+              Create an account
             </h1>
             <p className="mt-1 text-gray-500">
-              Sign in to continue
+              Sign up to get started
             </p>
           </div>
 
@@ -99,6 +118,15 @@ export default function Login() {
                 setSelectedRole(role);
                 setError('');
               }}
+            />
+
+            <Input
+              label="Full name"
+              type="text"
+              value={name}
+              onChange={setName}
+              placeholder="John Doe"
+              autoComplete="name"
             />
 
             <Input
@@ -125,11 +153,25 @@ export default function Login() {
               }}
               placeholder="••••••••"
               required
-              autoComplete="current-password"
-              error={error && error.includes('Password') ? error : undefined}
+              autoComplete="new-password"
+              error={error && error.includes('Password') && !error.includes('match') ? error : undefined}
             />
 
-            {error && error.includes('role') && (
+            <Input
+              label="Confirm password"
+              type="password"
+              value={confirmPassword}
+              onChange={(v) => {
+                setConfirmPassword(v);
+                setError('');
+              }}
+              placeholder="••••••••"
+              required
+              autoComplete="new-password"
+              error={error && error.includes('match') ? error : undefined}
+            />
+
+            {error && (error.includes('role') || error.includes('match')) && (
               <p className="text-sm text-red-600 text-center" role="alert">
                 {error}
               </p>
@@ -144,17 +186,17 @@ export default function Login() {
               {loading ? (
                 <span className="inline-flex items-center gap-2">
                   <Loader size="sm" className="flex-shrink-0" />
-                  Logging in...
+                  Creating account...
                 </span>
               ) : (
-                'Login'
+                'Sign up'
               )}
             </Button>
 
-            <p className="text-center text-sm text-gray-500 mt-4">
-              Don&apos;t have an account?{' '}
-              <Link to="/signup" className="font-medium text-blue-600 hover:text-blue-700">
-                Sign up
+            <p className="text-center text-sm text-gray-500">
+              Already have an account?{' '}
+              <Link to="/login" className="font-medium text-blue-600 hover:text-blue-700">
+                Sign in
               </Link>
             </p>
           </form>
